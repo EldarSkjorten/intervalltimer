@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Intervalltimer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --exercise-color: #ff6b35;
+    --rest-color: #00e5a0;
+    --countdown-color: #a78bfa;
+    --neutral: #888;
+    --text: #f0f0f0;
+    --ring-track: #222;
+    --btn-bg: #1a1a1a;
+    --btn-border: #333;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 420px; padding: 16px 20px; gap: 10px; }
+  .screen.active { display: flex; }
+
+  /* ── SETTINGS SCREEN ── */
+  #settings-screen { justify-content: center; height: 100dvh; overflow: hidden; }
+
+  .settings-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.6rem, 7vw, 2.4rem);
+    letter-spacing: 0.12em;
+    color: var(--text);
+  }
+
+  .settings-subtitle {
+    font-size: 0.65rem;
+    color: var(--neutral);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .setting-group {
+    width: 100%;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 14px;
+    padding: 10px 16px;
+  }
+
+  .setting-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--neutral);
+    margin-bottom: 8px;
+  }
+
+  .time-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .time-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .time-unit-label {
+    font-size: 0.6rem;
+    color: #555;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .adj-btn {
+    background: var(--btn-bg);
+    border: 1px solid var(--btn-border);
+    color: var(--text);
+    border-radius: 10px;
+    width: 48px;
+    height: 40px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .adj-btn:active { background: #2a2a2a; }
+
+  .time-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    min-width: 50px;
+    text-align: center;
+    line-height: 1;
+  }
+
+  .time-sep {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: #444;
+    margin-bottom: 20px;
+    align-self: center;
+  }
+
+  /* single-value row */
+  .single-inputs {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .start-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--exercise-color);
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .start-btn:active { opacity: 0.8; }
+
+  /* ── TIMER SCREEN ── */
+  #timer-screen { justify-content: center; height: 100dvh; gap: 0; }
+
+  .timer-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 16px;
+  }
+
+  .phase-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    transition: color 0.4s;
+  }
+
+  .round-label {
+    font-size: 0.75rem;
+    color: var(--neutral);
+    letter-spacing: 0.12em;
+  }
+
+  /* ── RING ── */
+  .ring-wrap {
+    position: relative;
+    width: min(72vw, 300px);
+    height: min(72vw, 300px);
+    flex-shrink: 0;
+  }
+
+  .ring-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .ring-track {
+    fill: none;
+    stroke: var(--ring-track);
+    stroke-width: 10;
+  }
+
+  .ring-progress {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s linear, stroke 0.4s;
+  }
+
+  .ring-time {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .ring-digits {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 18vw, 6.5rem);
+    letter-spacing: 0.02em;
+    line-height: 1;
+    transition: color 0.4s;
+  }
+
+  /* ── CONTROLS ── */
+  .timer-controls {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    padding-top: 20px;
+    padding-bottom: 0;
+  }
+
+  .ctrl-btn {
+    flex: 1;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ctrl-btn:active { opacity: 0.75; }
+
+  #pause-btn {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: var(--text);
+  }
+
+  #stop-btn {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: #ff4444;
+  }
+
+  /* ── DONE SCREEN ── */
+  #done-screen { justify-content: center; height: 100dvh; gap: 28px; }
+
+  .done-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 14vw, 5rem);
+    letter-spacing: 0.1em;
+    color: var(--exercise-color);
+  }
+
+  .done-sub {
+    font-size: 0.75rem;
+    color: var(--neutral);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .done-btn {
+    padding: 16px 40px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 14px;
+    color: var(--text);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+  }
+  .done-btn:active { opacity: 0.75; }
+</style>
+</head>
+<body>
+
+<!-- ── SETTINGS SCREEN ── -->
+<section id="settings-screen" class="screen active">
+  <div class="settings-title">INTERVALLTIMER</div>
+  <div class="settings-subtitle">Sett opp økten din</div>
+
+  <div class="setting-group">
+    <div class="setting-label">Øvelse</div>
+    <div class="time-inputs">
+      <div class="time-unit">
+        <div class="time-unit-label">Min</div>
+        <button class="adj-btn" onclick="adj('exMin',1)">+</button>
+        <div class="time-value" id="exMin">0</div>
+        <button class="adj-btn" onclick="adj('exMin',-1)">−</button>
+      </div>
+      <div class="time-sep">:</div>
+      <div class="time-unit">
+        <div class="time-unit-label">Sek</div>
+        <button class="adj-btn" onclick="adj('exSec',5)">+</button>
+        <div class="time-value" id="exSec">30</div>
+        <button class="adj-btn" onclick="adj('exSec',-5)">−</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <div class="setting-label">Pause</div>
+    <div class="time-inputs">
+      <div class="time-unit">
+        <div class="time-unit-label">Min</div>
+        <button class="adj-btn" onclick="adj('restMin',1)">+</button>
+        <div class="time-value" id="restMin">0</div>
+        <button class="adj-btn" onclick="adj('restMin',-1)">−</button>
+      </div>
+      <div class="time-sep">:</div>
+      <div class="time-unit">
+        <div class="time-unit-label">Sek</div>
+        <button class="adj-btn" onclick="adj('restSec',5)">+</button>
+        <div class="time-value" id="restSec">15</div>
+        <button class="adj-btn" onclick="adj('restSec',-5)">−</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <div class="setting-label">Antall runder</div>
+    <div class="single-inputs">
+      <button class="adj-btn" onclick="adj('rounds',-1)">−</button>
+      <div class="time-value" id="rounds">5</div>
+      <button class="adj-btn" onclick="adj('rounds',1)">+</button>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <div class="setting-label">Nedtelling før start (sek)</div>
+    <div class="single-inputs">
+      <button class="adj-btn" onclick="adj('prep',-5)">−</button>
+      <div class="time-value" id="prep">10</div>
+      <button class="adj-btn" onclick="adj('prep',5)">+</button>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startTimer()">START</button>
+</section>
+
+<!-- ── TIMER SCREEN ── -->
+<section id="timer-screen" class="screen">
+  <div class="timer-header">
+    <div class="phase-label" id="phase-label">NEDTELLING</div>
+    <div class="round-label" id="round-label"></div>
+  </div>
+
+  <div class="ring-wrap">
+    <svg class="ring-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <circle class="ring-track" cx="60" cy="60" r="52"/>
+      <circle class="ring-progress" id="ring" cx="60" cy="60" r="52"/>
+    </svg>
+    <div class="ring-time">
+      <div class="ring-digits" id="ring-digits">00:10</div>
+    </div>
+  </div>
+
+  <div class="timer-controls">
+    <button class="ctrl-btn" id="pause-btn" onclick="togglePause()">PAUSE</button>
+    <button class="ctrl-btn" id="stop-btn" onclick="stopTimer()">STOPP</button>
+  </div>
+</section>
+
+<!-- ── DONE SCREEN ── -->
+<section id="done-screen" class="screen">
+  <div class="done-title">FERDIG!</div>
+  <div class="done-sub" id="done-sub"></div>
+  <button class="done-btn" onclick="goToSettings()">NY ØVELSE</button>
+</section>
+
+<script>
+// ── State ──
+const cfg = { exMin:0, exSec:30, restMin:0, restSec:15, rounds:5, prep:10 };
+const limits = { exMin:[0,99], exSec:[0,55], restMin:[0,99], restSec:[0,55], rounds:[1,99], prep:[0,59] };
+const step5 = new Set(['exSec','restSec','prep']);
+
+let timer = null, paused = false;
+let phase = 'prep'; // prep | exercise | rest
+let remaining = 0, phaseDur = 0;
+let currentRound = 0, totalRounds = 0;
+let completedRounds = 0; // fullførte øvelsesrunder
+
+// ── Settings helpers ──
+function adj(key, delta) {
+  const [mn, mx] = limits[key];
+  // For step-5 fields, snap to nearest multiple
+  let val = cfg[key] + delta;
+  val = Math.max(mn, Math.min(mx, val));
+  cfg[key] = val;
+  document.getElementById(key).textContent = String(val).padStart(2,'0');
+}
+
+// ── Screen routing ──
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Audio ──
+// iOS Safari krever at AudioContext opprettes inne i en brukeraksjon
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function beep(freq, dur, type='sine') {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.5, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    o.start(); o.stop(ctx.currentTime + dur + 0.05);
+  } catch(e) {}
+}
+function soundExercise() { beep(880, 0.12); setTimeout(()=>beep(880,0.12),140); }
+function soundRest()     { beep(440, 0.2); }
+function soundDone()     { beep(660,0.15); setTimeout(()=>beep(880,0.15),180); setTimeout(()=>beep(1100,0.4),360); }
+
+// ── Ring ──
+const RING = document.getElementById('ring');
+const CIRC = 2 * Math.PI * 52; // r=52
+RING.style.strokeDasharray = CIRC;
+
+function setRing(frac, color) {
+  const offset = CIRC * (1 - Math.max(0, Math.min(1, frac)));
+  RING.style.strokeDashoffset = offset;
+  RING.style.stroke = color;
+  document.getElementById('ring-digits').style.color = color;
+  document.getElementById('phase-label').style.color = color;
+}
+
+// ── Phase colors ──
+const colors = { prep: 'var(--countdown-color)', exercise: 'var(--exercise-color)', rest: 'var(--rest-color)' };
+const labels = { prep: 'GJØR DEG KLAR', exercise: 'ØVELSE', rest: 'PAUSE' };
+
+// ── Format ──
+function fmt(s) {
+  const m = Math.floor(s/60), sec = s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// ── Timer logic ──
+function startTimer() {
+  totalRounds = cfg.rounds;
+  currentRound = 0;
+  completedRounds = 0;
+  beginPhase('prep', cfg.prep);
+  show('timer-screen');
+}
+
+function beginPhase(ph, secs) {
+  clearInterval(timer);
+  phase = ph; remaining = secs; phaseDur = secs;
+  paused = false;
+  document.getElementById('pause-btn').textContent = 'PAUSE';
+
+  updateDisplay();
+
+  if (ph === 'exercise') soundExercise();
+  else if (ph === 'rest') soundRest();
+
+  timer = setInterval(tick, 1000);
+}
+
+function tick() {
+  if (paused) return;
+  remaining--;
+  if (remaining <= 0) {
+    nextPhase();
+  } else {
+    updateDisplay();
+  }
+}
+
+function nextPhase() {
+  if (phase === 'prep') {
+    currentRound = 1;
+    beginPhase('exercise', cfg.exMin * 60 + cfg.exSec);
+  } else if (phase === 'exercise') {
+    completedRounds++;
+    if (currentRound >= totalRounds) {
+      endTimer(true);
+    } else {
+      beginPhase('rest', cfg.restMin * 60 + cfg.restSec);
+    }
+  } else if (phase === 'rest') {
+    currentRound++;
+    beginPhase('exercise', cfg.exMin * 60 + cfg.exSec);
+  }
+}
+
+function updateDisplay() {
+  const color = colors[phase];
+  const frac = phaseDur > 0 ? remaining / phaseDur : 0;
+  setRing(frac, color);
+  document.getElementById('ring-digits').textContent = fmt(remaining);
+  document.getElementById('phase-label').textContent = labels[phase];
+  document.getElementById('round-label').textContent =
+    phase === 'prep' ? '' : `Runde ${currentRound} av ${totalRounds}`;
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pause-btn').textContent = paused ? 'FORTSETT' : 'PAUSE';
+}
+
+function stopTimer() {
+  clearInterval(timer);
+  // Fullfører ikke pågående øvelse — tell bare fullførte
+  const stopped = completedRounds;
+  showDone(stopped, false);
+}
+
+function endTimer(allDone) {
+  clearInterval(timer);
+  soundDone();
+  showDone(completedRounds, true);
+}
+
+function showDone(count, allDone) {
+  if (allDone) soundDone();
+  const sub = count === 0
+    ? 'Ingen runder fullført'
+    : `${count} av ${totalRounds} runde${totalRounds > 1 ? 'r' : ''} fullført`;
+  document.getElementById('done-sub').textContent = sub;
+  show('done-screen');
+}
+
+function goToSettings() { show('settings-screen'); }
+</script>
+</body>
+</html>
