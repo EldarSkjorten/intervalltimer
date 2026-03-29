@@ -219,10 +219,10 @@
   }
 
   @keyframes ringFlash {
-    0%   { background: rgba(255,255,255,0.28); }
+    0%   { background: rgba(255,255,255,0.65); }
     100% { background: transparent; }
   }
-  .ring-flash { animation: ringFlash 0.35s ease-out; }
+  .ring-flash { animation: ringFlash 0.3s ease-out; }
 
   .ring-digits {
     font-family: 'Bebas Neue', sans-serif;
@@ -481,10 +481,10 @@ function soundTick()     { beep(659, 0.08); }                                   
 function soundExercise() { beep(784, 0.1); setTimeout(()=>ping(1047, 0.4), 130); }   // G5 → ping C6
 function soundRest()     { beep(659, 0.1); setTimeout(()=>ping(523, 0.5), 130); }    // E5 → ping C5
 function soundDone()     {
-  beep(1047, 0.1);                                // C6
-  setTimeout(()=>beep(1319, 0.1), 150);           // E6
-  setTimeout(()=>beep(1568, 0.1), 300);           // G6
-  setTimeout(()=>ping(2093, 1.4), 450);           // ping C7
+  beep(1047, 0.2);                                // C6
+  setTimeout(()=>beep(1319, 0.2), 150);           // E6
+  setTimeout(()=>beep(1568, 0.2), 300);           // G6
+  setTimeout(()=>ping(1047, 1.4), 450);           // ping C6 (ned fra C7)
 }
 
 // ── Ring ──
