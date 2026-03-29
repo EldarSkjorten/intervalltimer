@@ -481,6 +481,8 @@ function startTimer() {
   src.buffer = buf;
   src.connect(ctx.destination);
   src.start(0);
+  // Lagre innstillinger til localStorage
+  localStorage.setItem('intervalltimer_cfg', JSON.stringify(cfg));
   totalRounds = cfg.rounds;
   currentRound = 0;
   completedRounds = 0;
@@ -567,6 +569,23 @@ function showDone(count, allDone) {
 }
 
 function goToSettings() { show('settings-screen'); }
+
+// ── Last inn lagrede innstillinger ──
+(function () {
+  const saved = localStorage.getItem('intervalltimer_cfg');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      Object.keys(cfg).forEach(key => {
+        if (parsed[key] !== undefined) {
+          cfg[key] = parsed[key];
+          const el = document.getElementById(key);
+          if (el) el.textContent = String(parsed[key]).padStart(2, '0');
+        }
+      });
+    } catch(e) {}
+  }
+})();
 
 // iOS Safari: lås opp AudioContext ved første touch på siden
 function unlockAudio() {
