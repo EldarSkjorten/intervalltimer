@@ -474,6 +474,7 @@ function fmt(s) {
 
 // ── Timer logic ──
 function startTimer() {
+  beep(20, 0.01); // usynlig lyd (20Hz) for å holde AudioContext aktiv på iOS Safari
   totalRounds = cfg.rounds;
   currentRound = 0;
   completedRounds = 0;
