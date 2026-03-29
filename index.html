@@ -386,7 +386,7 @@
       <circle class="ring-track" cx="60" cy="60" r="52"/>
       <circle class="ring-progress" id="ring" cx="60" cy="60" r="52"/>
     </svg>
-    <div class="ring-time">
+    <div class="ring-time" id="ring-time">
       <div class="ring-digits" id="ring-digits">00:10</div>
     </div>
   </div>
@@ -477,14 +477,14 @@ function ping(freq, dur) {
     o.start(); o.stop(ctx.currentTime + dur + 0.05);
   } catch(e) {}
 }
-function soundTick()     { beep(660, 0.08); }
-function soundExercise() { beep(880, 0.1); setTimeout(()=>beep(1100, 0.15), 120); }
-function soundRest()     { beep(523, 0.1); setTimeout(()=>beep(440, 0.25), 130); }
+function soundTick()     { beep(659, 0.08); }                                        // E5
+function soundExercise() { beep(784, 0.1); setTimeout(()=>ping(1047, 0.4), 130); }   // G5 → ping C6
+function soundRest()     { beep(659, 0.1); setTimeout(()=>ping(523, 0.5), 130); }    // E5 → ping C5
 function soundDone()     {
-  beep(523, 0.1);
-  setTimeout(()=>beep(659, 0.1), 150);
-  setTimeout(()=>beep(784, 0.1), 300);
-  setTimeout(()=>ping(1047, 1.2), 450);
+  beep(1047, 0.1);                                // C6
+  setTimeout(()=>beep(1319, 0.1), 150);           // E6
+  setTimeout(()=>beep(1568, 0.1), 300);           // G6
+  setTimeout(()=>ping(2093, 1.4), 450);           // ping C7
 }
 
 // ── Ring ──
