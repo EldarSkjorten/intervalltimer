@@ -215,7 +215,14 @@
     align-items: center;
     justify-content: center;
     gap: 0;
+    border-radius: 50%;
   }
+
+  @keyframes ringFlash {
+    0%   { background: rgba(255,255,255,0.28); }
+    100% { background: transparent; }
+  }
+  .ring-flash { animation: ringFlash 0.35s ease-out; }
 
   .ring-digits {
     font-family: 'Bebas Neue', sans-serif;
@@ -458,9 +465,27 @@ function beep(freq, dur, type='sine') {
     o.start(); o.stop(ctx.currentTime + dur + 0.05);
   } catch(e) {}
 }
-function soundExercise() { beep(880, 0.12); setTimeout(()=>beep(880,0.12),140); }
-function soundRest()     { beep(440, 0.2); }
-function soundDone()     { beep(660,0.15); setTimeout(()=>beep(880,0.15),180); setTimeout(()=>beep(1100,0.4),360); }
+function ping(freq, dur) {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.6, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    o.start(); o.stop(ctx.currentTime + dur + 0.05);
+  } catch(e) {}
+}
+function soundTick()     { beep(660, 0.08); }
+function soundExercise() { beep(880, 0.1); setTimeout(()=>beep(1100, 0.15), 120); }
+function soundRest()     { beep(523, 0.1); setTimeout(()=>beep(440, 0.25), 130); }
+function soundDone()     {
+  beep(523, 0.1);
+  setTimeout(()=>beep(659, 0.1), 150);
+  setTimeout(()=>beep(784, 0.1), 300);
+  setTimeout(()=>ping(1047, 1.2), 450);
+}
 
 // ── Ring ──
 const RING = document.getElementById('ring');
@@ -518,12 +543,23 @@ function beginPhase(ph, secs) {
   timer = setInterval(tick, 1000);
 }
 
+function flashRing() {
+  const el = document.getElementById('ring-time');
+  el.classList.remove('ring-flash');
+  void el.offsetWidth; // tving reflow for å restarte animasjonen
+  el.classList.add('ring-flash');
+}
+
 function tick() {
   if (paused) return;
   remaining--;
   if (remaining <= 0) {
     nextPhase();
   } else {
+    if (remaining <= 5 && phaseDur > 5) {
+      soundTick();
+      flashRing();
+    }
     updateDisplay();
   }
 }
