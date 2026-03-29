@@ -291,13 +291,12 @@
   .done-btn:active { opacity: 0.75; }
 
   /* ── KOMPAKT LAYOUT FOR KORTE SKJERMER (iPad liggende, små telefoner) ── */
-  @media (max-height: 720px) {
-    #settings-screen { justify-content: flex-start; }
+  @media (orientation: landscape) and (max-height: 720px) {
+    #settings-screen { justify-content: flex-start; padding-bottom: max(40px, env(safe-area-inset-bottom)); }
     .screen { gap: 4px; }
     .setting-group { padding: 4px 12px; }
     .setting-label { margin-bottom: 2px; }
     .adj-btn { height: 36px; }
-    #settings-screen { padding-bottom: max(40px, env(safe-area-inset-bottom)); }
     .settings-title { font-size: clamp(1.3rem, 5vw, 1.8rem); }
   }
 </style>
