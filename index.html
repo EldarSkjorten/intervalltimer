@@ -404,6 +404,19 @@ const limits = { exMin:[0,99], exSec:[0,55], restMin:[0,99], restSec:[0,55], rou
 const step5 = new Set(['exSec','restSec','prep']);
 
 let timer = null, paused = false;
+let wakeLock = null;
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e) {}
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
 let phase = 'prep'; // prep | exercise | rest
 let remaining = 0, phaseDur = 0;
 let currentRound = 0, totalRounds = 0;
@@ -483,6 +496,7 @@ function startTimer() {
   src.start(0);
   // Lagre innstillinger til localStorage
   localStorage.setItem('intervalltimer_cfg', JSON.stringify(cfg));
+  requestWakeLock();
   totalRounds = cfg.rounds;
   currentRound = 0;
   completedRounds = 0;
@@ -548,6 +562,7 @@ function togglePause() {
 
 function stopTimer() {
   clearInterval(timer);
+  releaseWakeLock();
   // Fullfører ikke pågående øvelse — tell bare fullførte
   const stopped = completedRounds;
   showDone(stopped, false);
@@ -555,6 +570,7 @@ function stopTimer() {
 
 function endTimer(allDone) {
   clearInterval(timer);
+  releaseWakeLock();
   soundDone();
   showDone(completedRounds, true);
 }
