@@ -465,14 +465,14 @@ function beep(freq, dur, type='sine') {
     o.start(); o.stop(ctx.currentTime + dur + 0.05);
   } catch(e) {}
 }
-function ping(freq, dur) {
+function ping(freq, dur, vol=0.6) {
   try {
     const ctx = getAudioCtx();
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.connect(g); g.connect(ctx.destination);
     o.type = 'sine'; o.frequency.value = freq;
     g.gain.setValueAtTime(0.001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.6, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.01);
     g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
     o.start(); o.stop(ctx.currentTime + dur + 0.05);
   } catch(e) {}
@@ -484,7 +484,7 @@ function soundDone()     {
   beep(1047, 0.2);                                // C6
   setTimeout(()=>beep(1319, 0.2), 150);           // E6
   setTimeout(()=>beep(1568, 0.2), 300);           // G6
-  setTimeout(()=>ping(1047, 1.4), 450);           // ping C6 (ned fra C7)
+  setTimeout(()=>ping(2093, 1.4, 0.3), 450);      // ping C7, volum ned til 0.3
 }
 
 // ── Ring ──
