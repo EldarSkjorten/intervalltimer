@@ -474,7 +474,13 @@ function fmt(s) {
 
 // ── Timer logic ──
 function startTimer() {
-  beep(20, 0.01); // usynlig lyd (20Hz) for å holde AudioContext aktiv på iOS Safari
+  // Spill en stille 1-sample buffer for å holde AudioContext aktiv på iOS Safari (ingen klikkelyd)
+  const ctx = getAudioCtx();
+  const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start(0);
   totalRounds = cfg.rounds;
   currentRound = 0;
   completedRounds = 0;
